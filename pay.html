@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SkipIt — Secure Payment</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: #06050a; color: #fff; text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 24px;
+  }
+  .card { max-width: 360px; width: 100%; }
+  .badge {
+    height: 6px; border-radius: 3px; margin-bottom: 28px;
+    background: linear-gradient(90deg, #ff2d7b, #8b5cf6);
+  }
+  h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+  p { color: #b0abc4; font-size: 14px; line-height: 1.6; margin-top: 10px; }
+  button {
+    margin-top: 24px; width: 100%; padding: 15px; border: 0; border-radius: 14px;
+    background: linear-gradient(180deg, #ff2d7b, #e0175f); color: #fff;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+  }
+  .muted { margin-top: 14px; font-size: 12px; color: #6d6884; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="badge"></div>
+  <div id="start">
+    <h1>SkipIt Payment</h1>
+    <p id="desc">Complete your payment securely with Razorpay.</p>
+    <button id="payBtn">Pay now</button>
+    <p class="muted">Payments are processed by Razorpay. SkipIt never sees your card or UPI details.</p>
+  </div>
+  <div id="done" class="hidden">
+    <h1>Payment received ✓</h1>
+    <p>You can close this window and return to the SkipIt app — your pass will appear there in a few seconds.</p>
+  </div>
+  <div id="bad" class="hidden">
+    <h1>Payment link invalid</h1>
+    <p>This payment session is missing or expired. Go back to the SkipIt app and try again.</p>
+  </div>
+</div>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  var params = new URLSearchParams(location.search);
+  var orderId = params.get('o') || '';
+  var key = params.get('k') || '';
+  var desc = params.get('d') || '';
+
+  function show(id) {
+    ['start', 'done', 'bad'].forEach(function (x) {
+      document.getElementById(x).classList.toggle('hidden', x !== id);
+    });
+  }
+
+  if (!/^order_[A-Za-z0-9]{1,64}$/.test(orderId) || !/^rzp_(test|live)_[A-Za-z0-9]+$/.test(key)) {
+    show('bad');
+  } else {
+    if (desc) document.getElementById('desc').textContent = desc;
+    var openCheckout = function () {
+      var rzp = new Razorpay({
+        key: key,
+        order_id: orderId,          /* amount + currency come from the order */
+        name: 'SkipIt',
+        description: desc || 'SkipIt purchase',
+        theme: { color: '#ff2d7b' },
+        handler: function () { show('done'); },
+        modal: { ondismiss: function () { /* stay on start view for retry */ } }
+      });
+      rzp.on('payment.failed', function () { /* checkout shows its own error; user can retry */ });
+      rzp.open();
+    };
+    document.getElementById('payBtn').addEventListener('click', openCheckout);
+    openCheckout();
+  }
+</script>
+</body>
+</html>
