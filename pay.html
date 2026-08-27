@@ -48,9 +48,16 @@
 </div>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
+  // The merchant key is fixed to SkipIt's own publishable key — never taken
+  // from the URL, so this page can only ever open checkout into SkipIt's
+  // Razorpay account (a URL-supplied key would let anyone host a SkipIt-branded
+  // checkout that charges into their own merchant account). Swap this string
+  // when moving to live keys.
+  var KEY = 'rzp_test_SwVrCJRdLzfLm8';
+
   var params = new URLSearchParams(location.search);
   var orderId = params.get('o') || '';
-  var key = params.get('k') || '';
+  var key = KEY;
   var desc = params.get('d') || '';
 
   function show(id) {
@@ -59,7 +66,7 @@
     });
   }
 
-  if (!/^order_[A-Za-z0-9]{1,64}$/.test(orderId) || !/^rzp_(test|live)_[A-Za-z0-9]+$/.test(key)) {
+  if (!/^order_[A-Za-z0-9]{1,64}$/.test(orderId)) {
     show('bad');
   } else {
     if (desc) document.getElementById('desc').textContent = desc;
